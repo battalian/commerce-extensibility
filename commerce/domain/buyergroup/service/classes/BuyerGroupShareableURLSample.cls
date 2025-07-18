@@ -1,38 +1,65 @@
 /**
- * BuyerGroupShareableURLSample is a sample implementation of the BuyerGroupEvaluationService used to determine buyer group IDs for a user based on region.
- * The use case for this sample implementation is as follows:
- * - Out-of-the-box buyer groups based on account, market, and data cloud segment should be returned.
- * - In addition, buyer groups associated with the user's region (passed as a request parameter) are also returned.
+ * BuyerGroupShareableURLSample
  * 
- * - No more than MAX_BUYER_GROUPS should be returned by the code. 
+ * This class is a sample implementation of the {@code commercebuygrp.BuyerGroupEvaluationService}.
+ * It demonstrates how to extend the default buyer group evaluation logic to include custom criteria 
+ * based on request context parameters. In this case, the custom criterion is the user's region, which 
+ * is passed as a URL parameter (e.g., in a shareable URL for the storefront).
+ * 
+ * Use Case:
+ * - Retrieve default buyer groups based on standard rules (account, market, and data cloud segments).
+ * - Additionally, include buyer groups associated with the user's region (if provided via request context).
+ * 
+ * Notes:
+ * - This example demonstrates extensibility for shareable URLs in the commerce storefront.
+ * - To use this, the region parameter must be explicitly set in the request context via URL.
+ * - When implementing real logic, replace the placeholder region-based filtering with actual mapping logic.
+ * 
+ * Limitations:
+ * - Maximum allowed buyer groups is controlled by {@link #MAX_BUYER_GROUPS} (currently set to 30).
+ * - If the number exceeds this limit, an error response is returned instead of the list.
  */
 public without sharing class BuyerGroupShareableURLSample extends commercebuygrp.BuyerGroupEvaluationService {
 
-    private static Integer MAX_BUYER_GROUPS = 30;
+    /** Maximum number of buyer groups that can be associated with a single user request. */
+    private static final Integer MAX_BUYER_GROUPS = 30;
 
+    /**
+     * Retrieves buyer group IDs for a user, including:
+     *  - Default buyer groups (account, market, data cloud segments).
+     *  - Region-based buyer groups (if region parameter is provided).
+     *
+     * @param request The {@link commercebuygrp.BuyerGroupRequest} containing context parameters.
+     * @return A {@link commercebuygrp.BuyerGroupResponse} with buyer group IDs or an error if the limit is exceeded.
+     */
     public override commercebuygrp.BuyerGroupResponse getBuyerGroupIds(commercebuygrp.BuyerGroupRequest request) {
+        // Extract context parameters from the incoming request
         Map<String, Object> requestParameters = request.getRequestContextParameters();
 
-        //Here we are retreiving value that we set in Request Param for the store using Shareable URL 
-        String region  = (Boolean) requestParameters.get('region');
-       
+        // Retrieve the custom region parameter passed via shareable URL (e.g., &region=asia)
+        String region = (String) requestParameters.get('region');
 
-        // Getting default out-of-the-box buyer groups based on existing logic: account, market, and data cloud segment-based buyer groups
+        // Get default out-of-the-box buyer groups using base implementation
         commercebuygrp.BuyerGroupResponse defaultBuyerGroupResponse = super.getBuyerGroupIds(request);
         Set<String> buyerGroupIds = new Set<String>(defaultBuyerGroupResponse.getBuyerGroupIds());
 
-        if(region!=null && region.equals('asia')){
-            //filter buyer groups based on region value passed in Request
+        // If region is provided and equals "asia", add region-specific buyer groups
+        if (region != null && region.equalsIgnoreCase('asia')) {
+            // TODO: Implement logic to fetch additional buyer groups for Asia region.
+            // Example: buyerGroupIds.addAll(getRegionSpecificGroups(region));
         }
-        // Buyer group extensibility supports only up to MAX_BUYER_GROUPS buyer groups
+
+        // Enforce maximum limit for buyer groups
         if (buyerGroupIds.size() > MAX_BUYER_GROUPS) {
+            // Create error response when limit exceeds
             commercebuygrp.BuyerGroupResponse response = new commercebuygrp.BuyerGroupResponse();
             String errorMessage = 'More than ' + MAX_BUYER_GROUPS + ' buyer groups retrieved for the user. Contact Store Administrator.';
             response.setError(errorMessage, errorMessage);
             return response;
         }
 
-        orgPartition.put(cacheKey, buyerGroupIds);
+
+        // Return final response with allowed buyer group IDs
         return new commercebuygrp.BuyerGroupResponse(buyerGroupIds);
     }
-} 
+}
