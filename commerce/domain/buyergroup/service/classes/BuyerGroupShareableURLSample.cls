@@ -45,7 +45,7 @@ public without sharing class BuyerGroupShareableURLSample extends commercebuygrp
 
         // If region is provided and equals "asia", add region-specific buyer groups
         if (region != null && region.equalsIgnoreCase('asia')) {
-            // TODO: Implement logic to fetch additional buyer groups for Asia region.
+            // Add logic to fetch additional buyer groups for Asia region.
             // Example: buyerGroupIds.addAll(getRegionSpecificGroups(region));
         }
 
